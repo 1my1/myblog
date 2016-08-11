@@ -1,0 +1,1753 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Your awesome title</title>
+    <description>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.
+</description>
+    <link>http://1my1.github.io/</link>
+    <atom:link href="http://1my1.github.io/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Fri, 12 Aug 2016 00:45:07 +0800</pubDate>
+    <lastBuildDate>Fri, 12 Aug 2016 00:45:07 +0800</lastBuildDate>
+    <generator>Jekyll v3.0.0</generator>
+    
+      <item>
+        <title>Thinkspace</title>
+        <description>&lt;p&gt;Introducing &lt;strong&gt;Thinkspace&lt;/strong&gt;, just another minimalist Jekyll theme that focuses on technical writing. Designed for engineers to write their ranting and findings. A great minimalist, writing-focused theme for personal use or project blog. &lt;strong&gt;The front-page is the archives.&lt;/strong&gt; Typeface by &lt;a href=&quot;https://www.fontsquirrel.com/fonts/dejavu-sans-mono&quot;&gt;DejaVu Sans Mono&lt;/a&gt; and &lt;a href=&quot;http://fontawesome.io/&quot;&gt;Font Awesome&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://heiswayi.github.io/thinkspace/&quot;&gt;&lt;strong&gt;Demo&lt;/strong&gt;&lt;/a&gt; / &lt;a href=&quot;https://github.com/heiswayi/thinkspace&quot;&gt;&lt;strong&gt;GitHub&lt;/strong&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;screenshot&quot;&gt;Screenshot&lt;/h3&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://i.imgur.com/WHcnbYF.png&quot; alt=&quot;Screenshot&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Be minimalist. No hypocrisy.&lt;/p&gt;
+</description>
+        <pubDate>Fri, 10 Jun 2016 00:00:00 +0800</pubDate>
+        <link>http://1my1.github.io/2016/06/10/thinkspace.html</link>
+        <guid isPermaLink="true">http://1my1.github.io/2016/06/10/thinkspace.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>MVVM Common Classes Into a Single File (MVVM.cs)</title>
+        <description>&lt;p&gt;Whenever I want to create a .NET/WPF application that required me to implement MVVM design pattern, I have to do some code rewriting or creating some class files to enable the MVVM implementation. So without wasting my time, I created a collection of MVVM common classes into a single file called &lt;code&gt;MVVM.cs&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;This collection contains a &lt;code&gt;ViewModelBase&lt;/code&gt; class that can be implemented (inherited) by any view model class, and also &lt;code&gt;ICommand&lt;/code&gt; implementation which has two option classes called &lt;code&gt;DelegateCommand&lt;/code&gt; and &lt;code&gt;RelayCommand&lt;/code&gt;. You may use either one.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;If you don’t want to go through this long paste code here, I have put this on &lt;a href=&quot;https://gist.github.com/heiswayi/215e5588fbbd712930ed3e0689d155d0&quot;&gt;my gist&lt;/a&gt;. Have a look!&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;strong&gt;TL;DR&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Here’s the source code of &lt;strong&gt;MVVM.cs&lt;/strong&gt; file:&lt;/p&gt;
+
+&lt;p&gt;```csharp
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Linq.Expressions;
+using System.Windows;
+using System.Windows.Input;&lt;/p&gt;
+
+&lt;p&gt;namespace HeiswayiNrird.MVVM.Common
+{
+    /// &amp;lt;summary&amp;gt;
+    /// This is a base of ViewModel that implements INotifyPropertyChanged.
+    /// &amp;lt;/summary&amp;gt;
+    public abstract class ViewModelBase : INotifyPropertyChanged
+    {
+        /// &amp;lt;summary&amp;gt;
+        /// Multicast event for property change notifications.
+        /// &amp;lt;/summary&amp;gt;
+        public event PropertyChangedEventHandler PropertyChanged;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    /// &amp;lt;summary&amp;gt;
+    /// Notifies listeners that a property value has changed.
+    /// &amp;lt;/summary&amp;gt;
+    /// &amp;lt;param name=&quot;propertyName&quot;&amp;gt;Name of the property used to notify listeners.&amp;lt;/param&amp;gt;
+    protected void OnPropertyChanged(string propertyName)
+    {
+        //PropertyChangedEventHandler handler = PropertyChanged;
+
+        //if (handler != null)
+        //{
+        //    handler(this, new PropertyChangedEventArgs(propertyName));
+        //}
+
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    /// &amp;lt;summary&amp;gt;
+    /// Raises this object&#39;s PropertyChanged event.
+    /// &amp;lt;/summary&amp;gt;
+    /// &amp;lt;typeparam name=&quot;T&quot;&amp;gt;The type of the property that has a new value.&amp;lt;/typeparam&amp;gt;
+    /// &amp;lt;param name=&quot;propertyExpression&quot;&amp;gt;A Lambda expression representing the property that has a new value.&amp;lt;/param&amp;gt;
+    protected void RaisePropertyChanged&amp;lt;T&amp;gt;(Expression&amp;lt;Func&amp;lt;T&amp;gt;&amp;gt; propertyExpression)
+    {
+        var memberExpr = propertyExpression.Body as MemberExpression;
+        if (memberExpr == null)
+            throw new ArgumentException(&quot;propertyExpression should represent access to a member&quot;);
+        string memberName = memberExpr.Member.Name;
+        OnPropertyChanged(memberName);
+    }
+}
+
+/// &amp;lt;summary&amp;gt;
+/// This class facilitates associating a key binding in XAML markup to a command
+/// defined in a View Model by exposing a Command dependency property.
+/// The class derives from Freezable to work around a limitation in WPF when data-binding from XAML.
+/// &amp;lt;/summary&amp;gt;
+public class CommandReference : Freezable, ICommand
+{
+    public CommandReference()
+    {
+    }
+
+    public static readonly DependencyProperty CommandProperty = DependencyProperty.Register(&quot;Command&quot;, typeof(ICommand), typeof(CommandReference), new PropertyMetadata(new PropertyChangedCallback(OnCommandChanged)));
+
+    public ICommand Command
+    {
+        get { return (ICommand)GetValue(CommandProperty); }
+        set { SetValue(CommandProperty, value); }
+    }
+
+    #region ICommand Members
+
+    public bool CanExecute(object parameter)
+    {
+        if (Command != null)
+            return Command.CanExecute(parameter);
+        return false;
+    }
+
+    public void Execute(object parameter)
+    {
+        Command.Execute(parameter);
+    }
+
+    public event EventHandler CanExecuteChanged;
+
+    private static void OnCommandChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        CommandReference commandReference = d as CommandReference;
+        ICommand oldCommand = e.OldValue as ICommand;
+        ICommand newCommand = e.NewValue as ICommand;
+
+        if (oldCommand != null)
+        {
+            oldCommand.CanExecuteChanged -= commandReference.CanExecuteChanged;
+        }
+        if (newCommand != null)
+        {
+            newCommand.CanExecuteChanged += commandReference.CanExecuteChanged;
+        }
+    }
+
+    #endregion ICommand Members
+
+    #region Freezable
+
+    protected override Freezable CreateInstanceCore()
+    {
+        throw new NotImplementedException();
+    }
+
+    #endregion Freezable
+}
+
+/// &amp;lt;summary&amp;gt;
+/// This class allows delegating the commanding logic to methods passed as parameters,
+/// and enables a View to bind commands to objects that are not part of the element tree.
+/// &amp;lt;/summary&amp;gt;
+public class DelegateCommand : ICommand
+{
+    #region Constructors
+
+    public DelegateCommand(Action executeMethod)
+        : this(executeMethod, null, false)
+    {
+    }
+
+    public DelegateCommand(Action executeMethod, Func&amp;lt;bool&amp;gt; canExecuteMethod)
+        : this(executeMethod, canExecuteMethod, false)
+    {
+    }
+
+    public DelegateCommand(Action executeMethod, Func&amp;lt;bool&amp;gt; canExecuteMethod, bool isAutomaticRequeryDisabled)
+    {
+        if (executeMethod == null)
+        {
+            throw new ArgumentNullException(&quot;executeMethod&quot;);
+        }
+
+        _executeMethod = executeMethod;
+        _canExecuteMethod = canExecuteMethod;
+        _isAutomaticRequeryDisabled = isAutomaticRequeryDisabled;
+    }
+
+    #endregion Constructors
+
+    #region Public Methods
+
+    public bool CanExecute()
+    {
+        if (_canExecuteMethod != null)
+        {
+            return _canExecuteMethod();
+        }
+        return true;
+    }
+
+    public void Execute()
+    {
+        if (_executeMethod != null)
+        {
+            _executeMethod();
+        }
+    }
+
+    public bool IsAutomaticRequeryDisabled
+    {
+        get
+        {
+            return _isAutomaticRequeryDisabled;
+        }
+        set
+        {
+            if (_isAutomaticRequeryDisabled != value)
+            {
+                if (value)
+                {
+                    CommandManagerHelper.RemoveHandlersFromRequerySuggested(_canExecuteChangedHandlers);
+                }
+                else
+                {
+                    CommandManagerHelper.AddHandlersToRequerySuggested(_canExecuteChangedHandlers);
+                }
+                _isAutomaticRequeryDisabled = value;
+            }
+        }
+    }
+
+    public void RaiseCanExecuteChanged()
+    {
+        OnCanExecuteChanged();
+    }
+
+    protected virtual void OnCanExecuteChanged()
+    {
+        CommandManagerHelper.CallWeakReferenceHandlers(_canExecuteChangedHandlers);
+    }
+
+    #endregion Public Methods
+
+    #region ICommand Members
+
+    public event EventHandler CanExecuteChanged
+    {
+        add
+        {
+            if (!_isAutomaticRequeryDisabled)
+            {
+                CommandManager.RequerySuggested += value;
+            }
+            CommandManagerHelper.AddWeakReferenceHandler(ref _canExecuteChangedHandlers, value, 2);
+        }
+        remove
+        {
+            if (!_isAutomaticRequeryDisabled)
+            {
+                CommandManager.RequerySuggested -= value;
+            }
+            CommandManagerHelper.RemoveWeakReferenceHandler(_canExecuteChangedHandlers, value);
+        }
+    }
+
+    bool ICommand.CanExecute(object parameter)
+    {
+        return CanExecute();
+    }
+
+    void ICommand.Execute(object parameter)
+    {
+        Execute();
+    }
+
+    #endregion ICommand Members
+
+    #region Data
+
+    private readonly Action _executeMethod = null;
+    private readonly Func&amp;lt;bool&amp;gt; _canExecuteMethod = null;
+    private bool _isAutomaticRequeryDisabled = false;
+    private List&amp;lt;WeakReference&amp;gt; _canExecuteChangedHandlers;
+
+    #endregion Data
+}
+
+/// &amp;lt;summary&amp;gt;
+/// This class allows delegating the commanding logic to methods passed as parameters,
+/// and enables a View to bind commands to objects that are not part of the element tree.
+/// &amp;lt;/summary&amp;gt;
+/// &amp;lt;typeparam name=&quot;T&quot;&amp;gt;Type of the parameter passed to the delegates.&amp;lt;/typeparam&amp;gt;
+public class DelegateCommand&amp;lt;T&amp;gt; : ICommand
+{
+    #region Constructors
+
+    public DelegateCommand(Action&amp;lt;T&amp;gt; executeMethod)
+        : this(executeMethod, null, false)
+    {
+    }
+
+    public DelegateCommand(Action&amp;lt;T&amp;gt; executeMethod, Func&amp;lt;T, bool&amp;gt; canExecuteMethod)
+        : this(executeMethod, canExecuteMethod, false)
+    {
+    }
+
+    public DelegateCommand(Action&amp;lt;T&amp;gt; executeMethod, Func&amp;lt;T, bool&amp;gt; canExecuteMethod, bool isAutomaticRequeryDisabled)
+    {
+        if (executeMethod == null)
+        {
+            throw new ArgumentNullException(&quot;executeMethod&quot;);
+        }
+
+        _executeMethod = executeMethod;
+        _canExecuteMethod = canExecuteMethod;
+        _isAutomaticRequeryDisabled = isAutomaticRequeryDisabled;
+    }
+
+    #endregion Constructors
+
+    #region Public Methods
+
+    public bool CanExecute(T parameter)
+    {
+        if (_canExecuteMethod != null)
+        {
+            return _canExecuteMethod(parameter);
+        }
+        return true;
+    }
+
+    public void Execute(T parameter)
+    {
+        if (_executeMethod != null)
+        {
+            _executeMethod(parameter);
+        }
+    }
+
+    public void RaiseCanExecuteChanged()
+    {
+        OnCanExecuteChanged();
+    }
+
+    protected virtual void OnCanExecuteChanged()
+    {
+        CommandManagerHelper.CallWeakReferenceHandlers(_canExecuteChangedHandlers);
+    }
+
+    public bool IsAutomaticRequeryDisabled
+    {
+        get
+        {
+            return _isAutomaticRequeryDisabled;
+        }
+        set
+        {
+            if (_isAutomaticRequeryDisabled != value)
+            {
+                if (value)
+                {
+                    CommandManagerHelper.RemoveHandlersFromRequerySuggested(_canExecuteChangedHandlers);
+                }
+                else
+                {
+                    CommandManagerHelper.AddHandlersToRequerySuggested(_canExecuteChangedHandlers);
+                }
+                _isAutomaticRequeryDisabled = value;
+            }
+        }
+    }
+
+    #endregion Public Methods
+
+    #region ICommand Members
+
+    public event EventHandler CanExecuteChanged
+    {
+        add
+        {
+            if (!_isAutomaticRequeryDisabled)
+            {
+                CommandManager.RequerySuggested += value;
+            }
+            CommandManagerHelper.AddWeakReferenceHandler(ref _canExecuteChangedHandlers, value, 2);
+        }
+        remove
+        {
+            if (!_isAutomaticRequeryDisabled)
+            {
+                CommandManager.RequerySuggested -= value;
+            }
+            CommandManagerHelper.RemoveWeakReferenceHandler(_canExecuteChangedHandlers, value);
+        }
+    }
+
+    bool ICommand.CanExecute(object parameter)
+    {
+        if (parameter == null &amp;amp;&amp;amp;
+            typeof(T).IsValueType)
+        {
+            return (_canExecuteMethod == null);
+        }
+        return CanExecute((T)parameter);
+    }
+
+    void ICommand.Execute(object parameter)
+    {
+        Execute((T)parameter);
+    }
+
+    #endregion ICommand Members
+
+    #region Data
+
+    private readonly Action&amp;lt;T&amp;gt; _executeMethod = null;
+    private readonly Func&amp;lt;T, bool&amp;gt; _canExecuteMethod = null;
+    private bool _isAutomaticRequeryDisabled = false;
+    private List&amp;lt;WeakReference&amp;gt; _canExecuteChangedHandlers;
+
+    #endregion Data
+}
+
+/// &amp;lt;summary&amp;gt;
+/// This class contains methods for the CommandManager that
+/// help avoid memory leaks by using weak references.
+/// &amp;lt;/summary&amp;gt;
+internal class CommandManagerHelper
+{
+    internal static void CallWeakReferenceHandlers(List&amp;lt;WeakReference&amp;gt; handlers)
+    {
+        if (handlers != null)
+        {
+            EventHandler[] callees = new EventHandler[handlers.Count];
+            int count = 0;
+
+            for (int i = handlers.Count - 1; i &amp;gt;= 0; i--)
+            {
+                WeakReference reference = handlers[i];
+                EventHandler handler = reference.Target as EventHandler;
+                if (handler == null)
+                {
+                    handlers.RemoveAt(i);
+                }
+                else
+                {
+                    callees[count] = handler;
+                    count++;
+                }
+            }
+
+            for (int i = 0; i &amp;lt; count; i++)
+            {
+                EventHandler handler = callees[i];
+                handler(null, EventArgs.Empty);
+            }
+        }
+    }
+
+    internal static void AddHandlersToRequerySuggested(List&amp;lt;WeakReference&amp;gt; handlers)
+    {
+        if (handlers != null)
+        {
+            foreach (WeakReference handlerRef in handlers)
+            {
+                EventHandler handler = handlerRef.Target as EventHandler;
+                if (handler != null)
+                {
+                    CommandManager.RequerySuggested += handler;
+                }
+            }
+        }
+    }
+
+    internal static void RemoveHandlersFromRequerySuggested(List&amp;lt;WeakReference&amp;gt; handlers)
+    {
+        if (handlers != null)
+        {
+            foreach (WeakReference handlerRef in handlers)
+            {
+                EventHandler handler = handlerRef.Target as EventHandler;
+                if (handler != null)
+                {
+                    CommandManager.RequerySuggested -= handler;
+                }
+            }
+        }
+    }
+
+    internal static void AddWeakReferenceHandler(ref List&amp;lt;WeakReference&amp;gt; handlers, EventHandler handler)
+    {
+        AddWeakReferenceHandler(ref handlers, handler, -1);
+    }
+
+    internal static void AddWeakReferenceHandler(ref List&amp;lt;WeakReference&amp;gt; handlers, EventHandler handler, int defaultListSize)
+    {
+        if (handlers == null)
+        {
+            handlers = (defaultListSize &amp;gt; 0 ? new List&amp;lt;WeakReference&amp;gt;(defaultListSize) : new List&amp;lt;WeakReference&amp;gt;());
+        }
+
+        handlers.Add(new WeakReference(handler));
+    }
+
+    internal static void RemoveWeakReferenceHandler(List&amp;lt;WeakReference&amp;gt; handlers, EventHandler handler)
+    {
+        if (handlers != null)
+        {
+            for (int i = handlers.Count - 1; i &amp;gt;= 0; i--)
+            {
+                WeakReference reference = handlers[i];
+                EventHandler existingHandler = reference.Target as EventHandler;
+                if ((existingHandler == null) || (existingHandler == handler))
+                {
+                    handlers.RemoveAt(i);
+                }
+            }
+        }
+    }
+}
+
+/// &amp;lt;summary&amp;gt;
+/// A command whose sole purpose is to relay its functionality to other objects by invoking delegates.
+/// The default return value for the CanExecute method is &#39;true&#39;.
+/// &amp;lt;/summary&amp;gt;
+public class RelayCommand : ICommand
+{
+    #region Fields
+
+    private readonly Action&amp;lt;object&amp;gt; _execute;
+    private readonly Predicate&amp;lt;object&amp;gt; _canExecute;
+
+    #endregion Fields
+
+    #region Constructors
+
+    public RelayCommand(Action&amp;lt;object&amp;gt; execute)
+    : this(execute, null)
+    {
+    }
+
+    public RelayCommand(Action&amp;lt;object&amp;gt; execute, Predicate&amp;lt;object&amp;gt; canExecute)
+    {
+        if (execute == null)
+            throw new ArgumentNullException(&quot;execute&quot;);
+
+        _execute = execute;
+        _canExecute = canExecute;
+    }
+
+    #endregion Constructors
+
+    #region ICommand Members
+
+    [DebuggerStepThrough]
+    public bool CanExecute(object parameter)
+    {
+        return _canExecute == null ? true : _canExecute(parameter);
+    }
+
+    public event EventHandler CanExecuteChanged
+    {
+        add { CommandManager.RequerySuggested += value; }
+        remove { CommandManager.RequerySuggested -= value; }
+    }
+
+    public void Execute(object parameter)
+    {
+        _execute(parameter);
+    }
+
+    #endregion ICommand Members
+}
+
+/// &amp;lt;summary&amp;gt;
+/// A command whose sole purpose is to relay its functionality to other objects by invoking delegates.
+/// The default return value for the CanExecute method is &#39;true&#39;.
+/// &amp;lt;/summary&amp;gt;
+/// &amp;lt;typeparam name=&quot;T&quot;&amp;gt;Type of the parameter passed to the delegates.&amp;lt;/typeparam&amp;gt;
+public class RelayCommand&amp;lt;T&amp;gt; : ICommand
+{
+    #region Fields
+
+    private readonly Action&amp;lt;T&amp;gt; _execute = null;
+    private readonly Predicate&amp;lt;T&amp;gt; _canExecute = null;
+
+    #endregion Fields
+
+    #region Constructors
+
+    /// &amp;lt;summary&amp;gt;
+    /// Initializes a new instance of &amp;lt;see cref=&quot;DelegateCommand{T}&quot;/&amp;gt;.
+    /// &amp;lt;/summary&amp;gt;
+    /// &amp;lt;param name=&quot;execute&quot;&amp;gt;Delegate to execute when Execute is called on the command. This can be null to just hook up a CanExecute delegate.&amp;lt;/param&amp;gt;
+    /// &amp;lt;remarks&amp;gt;&amp;lt;seealso cref=&quot;CanExecute&quot;/&amp;gt; will always return true.&amp;lt;/remarks&amp;gt;
+    public RelayCommand(Action&amp;lt;T&amp;gt; execute)
+        : this(execute, null)
+    {
+    }
+
+    /// &amp;lt;summary&amp;gt;
+    /// Creates a new command.
+    /// &amp;lt;/summary&amp;gt;
+    /// &amp;lt;param name=&quot;execute&quot;&amp;gt;The execution logic.&amp;lt;/param&amp;gt;
+    /// &amp;lt;param name=&quot;canExecute&quot;&amp;gt;The execution status logic.&amp;lt;/param&amp;gt;
+    public RelayCommand(Action&amp;lt;T&amp;gt; execute, Predicate&amp;lt;T&amp;gt; canExecute)
+    {
+        if (execute == null)
+            throw new ArgumentNullException(&quot;execute&quot;);
+
+        _execute = execute;
+        _canExecute = canExecute;
+    }
+
+    #endregion Constructors
+
+    #region ICommand Members
+
+    /// &amp;lt;summary&amp;gt;
+    /// Defines the method that determines whether the command can execute in its current state.
+    /// &amp;lt;/summary&amp;gt;
+    /// &amp;lt;param name=&quot;parameter&quot;&amp;gt;Data used by the command.  If the command does not require data to be passed, this object can be set to null.&amp;lt;/param&amp;gt;
+    /// &amp;lt;returns&amp;gt;
+    /// true if this command can be executed; otherwise, false.
+    /// &amp;lt;/returns&amp;gt;
+    public bool CanExecute(object parameter)
+    {
+        return _canExecute == null ? true : _canExecute((T)parameter);
+    }
+
+    /// &amp;lt;summary&amp;gt;
+    /// Occurs when changes occur that affect whether or not the command should execute.
+    /// &amp;lt;/summary&amp;gt;
+    public event EventHandler CanExecuteChanged
+    {
+        add { CommandManager.RequerySuggested += value; }
+        remove { CommandManager.RequerySuggested -= value; }
+    }
+
+    /// &amp;lt;summary&amp;gt;
+    /// Defines the method to be called when the command is invoked.
+    /// &amp;lt;/summary&amp;gt;
+    /// &amp;lt;param name=&quot;parameter&quot;&amp;gt;Data used by the command. If the command does not require data to be passed, this object can be set to &amp;lt;see langword=&quot;null&quot; /&amp;gt;.&amp;lt;/param&amp;gt;
+    public void Execute(object parameter)
+    {
+        _execute((T)parameter);
+    }
+
+    #endregion ICommand Members
+} } ```
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&quot;examples-on-how-you-can-use-them&quot;&gt;Examples on how you can use them&lt;/h3&gt;
+
+&lt;p&gt;I have concluded everything inside here, assuming your view model filename is &lt;strong&gt;ViewModelExample.cs&lt;/strong&gt;:&lt;/p&gt;
+
+&lt;p&gt;```csharp
+using HeiswayiNrird.MVVM.Common;
+using System.Windows.Input;
+using System;&lt;/p&gt;
+
+&lt;p&gt;namespace MVVMExampleApp
+{
+    /// &amp;lt;summary&amp;gt;
+    /// Example of view model.
+    /// &amp;lt;/summary&amp;gt;
+    public class ViewModelExample : ViewModelBase
+    {
+        #region Properties&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    // Example 1
+    private object _propertyName1;
+    public object PropertyName1
+    {
+        get { return _propertyName1; }
+        set
+        {
+            _propertyName1 = value;
+            OnPropertyChanged(&quot;PropertyName1&quot;);
+        }
+    }
+
+    // Example 2
+    private object _propertyName2;
+    public object PropertyName2
+    {
+        get { return _propertyName2; }
+        set
+        {
+            _propertyName2 = value;
+            RaisePropertyChanged(() =&amp;gt; PropertyName2); // Use of lambda expression
+        }
+    }
+
+    #endregion
+
+    #region ICommand
+
+    // Example 1 : DelegateCommand
+    private ICommand _commandProperty1;
+    public ICommand CommandProperty1
+    {
+        get
+        {
+            if (_commandProperty1 == null)
+            {
+                //_commandProperty1 = new DelegateCommand(methodToExecute);
+                _commandProperty1 = new DelegateCommand(methodToExecute, canExecuteMethodToExecute);
+            }
+            return _commandProperty1;
+        }
+    }
+
+    // Example 2 : DelegateCommand with type
+    private ICommand _commandProperty2;
+    public ICommand CommandProperty2
+    {
+        get
+        {
+            if (_commandProperty2 == null)
+            {
+                _commandProperty2 = new DelegateCommand&amp;lt;int&amp;gt;(methodToExecute2);
+            }
+            return _commandProperty2;
+        }
+    }
+
+    // Example 3 : RelayCommand
+    private ICommand _commandProperty3;
+    public ICommand CommandProperty3
+    {
+        get
+        {
+            if (_commandProperty3 == null)
+            {
+                _commandProperty3 = new RelayCommand(
+                    param =&amp;gt; methodToExecute(),
+                    param =&amp;gt; canExecuteMethodToExecute()
+                    );
+            }
+            return _commandProperty3;
+        }
+    }
+
+    // Example 4 : RelayCommand with parameter
+    private ICommand _commandProperty4;
+    public ICommand CommandProperty4
+    {
+        get
+        {
+            if (_commandProperty4 == null)
+            {
+                _commandProperty4 = new RelayCommand(
+                    param =&amp;gt; methodToExecute2((int)param), // Use with UI control CommandParameter property
+                    param =&amp;gt; canExecuteMethodToExecute()
+                    );
+            }
+            return _commandProperty4;
+        }
+    }
+
+    #region Execution Methods
+
+    private void methodToExecute2(int param)
+    {
+        throw new NotImplementedException();
+    }
+
+    private void methodToExecute()
+    {
+        // Logic to execute...
+    }
+
+    private bool canExecuteMethodToExecute()
+    {
+        // Put your expression/condition here, return true/false...
+        return true;
+    }
+
+    #endregion
+
+    #endregion
+} } ```
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I hope this collection will benefit you, happy coding!&lt;/p&gt;
+</description>
+        <pubDate>Sun, 05 Jun 2016 00:00:00 +0800</pubDate>
+        <link>http://1my1.github.io/2016/06/05/mvvm-common-classes-into-a-single-file.html</link>
+        <guid isPermaLink="true">http://1my1.github.io/2016/06/05/mvvm-common-classes-into-a-single-file.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>C# Common Practices</title>
+        <description>&lt;p&gt;This article may not be as unique as you are expected to be. Because out there, if you’re friendly enough with Mr. Google, you will find something more similar to this article. Even so, I still want to note this as a reminder to myself whenever I do programming in C#, and also might help or as a common guideline to the new C# developers.&lt;/p&gt;
+
+&lt;h3 id=&quot;use-of-proper-naming-conventions&quot;&gt;Use of Proper Naming Conventions&lt;/h3&gt;
+
+&lt;p&gt;Use of proper naming conventions ensure you an easy way to maintain your code, especially when the software is big or has thousand lines of code.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Always use Camel case or Pascal when declaring variables/properties.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Camel case is a word with the first letter lowercase, while others are capitalized. Pascal case is a word the first letter capitalized and followed by others.&lt;/p&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;p&gt;```csharp
+// Declaring variables using Camel case
+private double numberOfSamples;
+private int primeNumber;
+private object myObject&lt;/p&gt;
+
+&lt;p&gt;// Declaring public properties using Pascal case
+public double Distance { get; set; }
+public int NumberOfChannels { get; }
+public object MyObject { get; private set; }&lt;/p&gt;
+
+&lt;p&gt;// Private methods using Camel case
+private bool isValid(double value) { … }
+private void getUrlFromServer() { … }&lt;/p&gt;
+
+&lt;p&gt;// Public methods using Pascal case
+public double GetNumberOfSamples() { … }
+public bool IsUrlWorking(string url) { … }
+```&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Use all uppercase when declaring constant variables.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;csharp
+public const int INVALID_VALUE = -1;
+public const string ERROR_MSG = &quot;Application crashed. Please check the log file.&quot;
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Never use a name that begins with a numeric character.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Instead of &lt;code&gt;1Person&lt;/code&gt;, you can define as &lt;code&gt;OnePerson&lt;/code&gt;.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Always use meaningful names for class, property, method, variable, etc. Make it easily understandable. Good code is self-documented.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Example: Instead of &lt;code&gt;Meas&lt;/code&gt; class name, best to put in a complete term as &lt;code&gt;Measurement&lt;/code&gt;.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;If you can, just avoid adding prefixes or suffixes for your identifiers. However, this is subjective/optional depending on your organization coding practices.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;As far as I know, it’s not that much useful to add prefix like &lt;code&gt;m_&lt;/code&gt; or &lt;code&gt;_&lt;/code&gt; to your variable declaration. But if you still want to use it, that’s okay for me if you think by adding those prefixes will help your code looks much more readable in recognizing the variable of &lt;code&gt;private&lt;/code&gt; members.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Always use &lt;code&gt;I&lt;/code&gt; as a prefix for Interface. This is a common practice for declaring interfaces.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;p&gt;```csharp
+public interface IMyInterface
+{
+  void MethodToImplement(); // Abstract method signature
+  double MyProperties { get; }
+}&lt;/p&gt;
+
+&lt;p&gt;public class MyInterfaceImplementer : IMyInterface
+{
+  // Constructor
+  public MyInterfaceImplementer()
+  {
+    MyInterfaceImplementer obj = new MyInterfaceImplementer();
+    obj.MethodToImplement();
+  }&lt;/p&gt;
+
+&lt;p&gt;public void MethodToImplement()
+  {
+    // Abstract method implementation here
+  }
+}
+```&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Always add &lt;code&gt;Exception&lt;/code&gt; as suffix for your custom exception class. This will give better visibility to your exception class.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;csharp
+public class LoginException : System.exception
+{
+  // TODO stuffs here...
+}
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Never prefix or suffix the class name to its property names.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;p&gt;```csharp
+public class Person
+{
+  public string PersonFirstname { get; set; } // [❌] DON’T DO THIS
+  public string Firstname { get; set; } // [✓] DO THIS INSTEAD
+}&lt;/p&gt;
+
+&lt;p&gt;static void Main()
+{
+  // Because you can easily identify it from that class directly.
+  Person person = new Person();
+  Console.WriteLine(person.Firstname); // &amp;lt;–
+}
+```&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Recommended to use prefix like &lt;code&gt;Is&lt;/code&gt;, &lt;code&gt;Has&lt;/code&gt; or &lt;code&gt;Can&lt;/code&gt; for Boolean properties, e.g. &lt;code&gt;IsVisible&lt;/code&gt;, &lt;code&gt;HasChildren&lt;/code&gt;, &lt;code&gt;CanExecute&lt;/code&gt;. These will give proper meaning to the properties.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Remember, good code is self-documented.&lt;/p&gt;
+
+&lt;h3 id=&quot;other-proper-practices&quot;&gt;Other Proper Practices&lt;/h3&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Use Nullable Data Types whenever required.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;csharp
+int index = 0; // Simple declaration of int
+int? index = null; // Nullable data type declaration
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Use runtime constants over compile time constants.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Runtime constants are those being evaluated at the runtime and declared with the keyword &lt;code&gt;readonly&lt;/code&gt;. On the other side, compile time constants are &lt;code&gt;static&lt;/code&gt;, evaluated at the time of compilation and declared with the keyword &lt;code&gt;const&lt;/code&gt;;&lt;/p&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;csharp
+public readonly string LOG_FILENAME = &quot;app.log&quot;; // Runtime constants
+public const string LOG_FILENAME = &quot;app.log&quot;; // Compile time constants
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;So, what is the need to prefer &lt;code&gt;readonly&lt;/code&gt; over &lt;code&gt;const&lt;/code&gt; variables? Compile time constants (&lt;code&gt;const&lt;/code&gt;) must be initialized at the time of declaration and can’t be changed later. Also, they are limited to only numbers and strings. The IL replaces the &lt;code&gt;const&lt;/code&gt; variable with the value of it over the whole code and thus it is a bit faster. Whereas, the Runtime constants (&lt;code&gt;readonly&lt;/code&gt;) are initialized in the constructor and can be changed at different initialization time. The IL references the &lt;code&gt;readonly&lt;/code&gt; variable and not the original value. So, when you have some critical situation, use &lt;code&gt;const&lt;/code&gt; to make the code run faster. When you need a reliable code, always prefer &lt;code&gt;readonly&lt;/code&gt; variables.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Use “is” and “as” operators while casting.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;It’s better to use &lt;code&gt;is&lt;/code&gt; and &lt;code&gt;as&lt;/code&gt; operator while casting, instead of explicit casting.&lt;/p&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;csharp
+var employee = (Employee)person;
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;In the code above, suppose your person is a &lt;code&gt;Customer&lt;/code&gt; type and when you’re converting it to &lt;code&gt;Employee&lt;/code&gt; type, it will throw &lt;code&gt;Exception&lt;/code&gt; and in that case, you have to handle it using &lt;code&gt;try-catch&lt;/code&gt; block.&lt;/p&gt;
+
+&lt;p&gt;```csharp
+// Check if the person is Employee type
+if (person is Employee)
+{
+  // Convert person to Employee type
+  employee = person as Employee;
+}&lt;/p&gt;
+
+&lt;p&gt;// Check if the person is Customer type
+if (person is Customer)
+{
+  // Conver person to Customer type
+  customer = person as Customer;
+}
+```&lt;/p&gt;
+
+&lt;p&gt;In the code above, I do the checking before converting it to the right type. If it is unable to convert, it will return as &lt;code&gt;null&lt;/code&gt; but will not throw any exception. So, from here we can check whether the converted value is &lt;code&gt;null&lt;/code&gt;.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Use string.Format() or StringBuilder for string concatenation.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;It’s because of better memory management! &lt;code&gt;string.Format()&lt;/code&gt; will not create multiple objects and &lt;code&gt;StringBuilder&lt;/code&gt; is an immutable object which will not create separate memory for each operation.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Use Conditional Attributes when necessary.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Well, it’s very helpful when you want to do something only for the debug version.&lt;/p&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;p&gt;```csharp
+private void printFirstname()
+{
+  string firstname = string.Empty;
+  #if DEBUG
+  firstname = getFirstname(); // In production, this method is never be called
+  #endif
+  Console.WriteLine(firstname);
+}&lt;/p&gt;
+
+&lt;p&gt;// OR&lt;/p&gt;
+
+&lt;p&gt;[Conditional(“DEBUG”)]
+[Conditional(“TRACE”)]
+private void printFirstname()
+{
+  string firstname = getFirstname();
+  Console.WriteLine(firstname);
+}
+```&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Use “0” (zero) as Default Value for Enum Value Types.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;p&gt;```csharp
+public enum PersonType
+{
+  None = 0,
+  Customer,
+  Employee,
+}&lt;/p&gt;
+
+&lt;p&gt;class Program
+{
+  static void Main(string[] args)
+  {
+    PersonType personType = new PersonType();
+    Console.WriteLine(personType); // Will print “None”
+  }
+}
+```&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Always prefer the foreach(…) loop.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;The &lt;code&gt;foreach&lt;/code&gt; statement is a variation of &lt;code&gt;do&lt;/code&gt;, &lt;code&gt;while&lt;/code&gt; or &lt;code&gt;for&lt;/code&gt; loops. The best iteration code generation. The advantage is while looping through the Single Dimensional or Multi Dimensional array, you don’t have to write multiline &lt;code&gt;for&lt;/code&gt; statements. The compiler internally will generate that code. Thus, increases your productivity.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Properly utilize try-catch-finally blocks.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;If you write code that may throw some Exception, use the &lt;code&gt;try-catch&lt;/code&gt; block for that piece of code to handle the exception. Unnecessary surrounding lines of code with &lt;code&gt;try-catch&lt;/code&gt; will slow down your application. Use it only when required. Use the &lt;code&gt;finally&lt;/code&gt; block to clean up any resources after the call, e.g. if you’re doing any database call, close the connection in this block.&lt;/p&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;csharp
+void ReadFile(int index)
+{
+  // To run this code, substitute a valid path from your local machine
+  string path = @&quot;c:\users\public\test.txt&quot;;
+  System.IO.StreamReader file = new System.IO.StreamReader(path);
+  char[] buffer = new char[10];
+  try
+  {
+    file.ReadBlock(buffer, index, buffer.Length);
+  }
+  catch (System.IO.IOException e)
+  {
+    Console.WriteLine(&quot;Error reading from {0}. Message = {1}&quot;, path, e.Message);
+  }
+  finally
+  {
+    if (file != null)
+    {
+      file.Close();
+    }
+  }
+  // Do something with buffer...
+}
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Catch only Exception that you can handle.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;People always use the generic &lt;code&gt;Exception&lt;/code&gt; class to catch any exception which neither good for your app nor for the system performance. You may use this generic &lt;code&gt;Exception&lt;/code&gt; to catch for unknown exceptions. If you know that you code might throwing &lt;code&gt;NullReferenceException&lt;/code&gt; or &lt;code&gt;ArgumentException&lt;/code&gt;, use it specifically in order to easily handle the problem.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Use IDisposable interface.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Use &lt;code&gt;IDisposable&lt;/code&gt; interface to free all the resources from the memory. Once you implement &lt;code&gt;IDisposable&lt;/code&gt; interface in your class, you will get a &lt;code&gt;Dispose()&lt;/code&gt; method there. Write code there to free the resources.&lt;/p&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;p&gt;```csharp
+public class User : IDisposable
+{
+  public int id { get; protected set; }
+  public string name { get; protected set; }
+  public string pass { get; protected set; }&lt;/p&gt;
+
+&lt;p&gt;public User(int userID)
+  {
+    id = userID;
+  }
+  public User(string Username, string Password)
+  {
+    name = Username;
+    pass = Password;
+  }&lt;/p&gt;
+
+&lt;p&gt;// Other functions go here…&lt;/p&gt;
+
+&lt;p&gt;public void Dispose()
+  {
+    Dispose(true);
+    GC.SuppressFinalize(this);
+  }&lt;/p&gt;
+
+&lt;p&gt;protected virtual void Dispose(bool disposing)
+  {
+    if (disposing)
+    {
+      // free managed resources
+    }
+    // free native resources if there are any.
+  }&lt;/p&gt;
+
+&lt;p&gt;}
+```&lt;/p&gt;
+
+&lt;p&gt;If you’re using &lt;code&gt;using(...) { ... }&lt;/code&gt; block, it will call the &lt;code&gt;Dispose()&lt;/code&gt; method automatically to free up the class resources. You will not have to call the &lt;code&gt;Dispose()&lt;/code&gt; explicitly for the class.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Split you logic in several small and simple methods.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;If methods are too long, sometimes it’s difficult to handle them. This is why you need to break them in separate methods and in future you may need to call one part, it will be easier to call rather than replicating the code. This is also easier to do unit testing for the small chunks rather than a big code. Based upon that, extract your code in small simple methods and call them from wherever you want. In general, a method should never be more than 10-15 lines long.&lt;/p&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;p&gt;```csharp
+// Assuming I’m going to calculate the force due to
+// gravitational acting on two bodies of mass A kg and B kg
+// separated by the distance X cm?
+//
+// Formula, F = (G * m1 * m2) / r^2
+//&lt;/p&gt;
+
+&lt;p&gt;public double GetDividend(double gravityConstant, double mass1, double mass2)
+{
+  // Return G * m1 * m2
+}&lt;/p&gt;
+
+&lt;p&gt;public double GetDivisor(double distance)
+{
+  // Convert distance from cm to m
+  // Return distance with square
+}&lt;/p&gt;
+
+&lt;p&gt;public double GetForce(double dividend, double divisor)
+{
+  // Return result of calculation = dividend / divisor
+}&lt;/p&gt;
+
+&lt;p&gt;static void Main()
+{
+  var result = GetForce(GetDividend() / GetDivisor());
+  Console.WriteLine(result.ToString());
+}
+```&lt;/p&gt;
+</description>
+        <pubDate>Thu, 02 Jun 2016 00:00:00 +0800</pubDate>
+        <link>http://1my1.github.io/2016/06/02/csharp-common-practices.html</link>
+        <guid isPermaLink="true">http://1my1.github.io/2016/06/02/csharp-common-practices.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Understanding Multithreading vs Single Threading Programming</title>
+        <description>&lt;p&gt;Multithreading is a widespread programming and execution model that allows multiple threads to exist within the context of one process. They share the process’s resources, but are able to execute independently while the single threading is the processing of one command at a time.&lt;/p&gt;
+
+&lt;p&gt;The purpose of threading is to allow computer to do more than one thing at a time. In a single core computer, multithreading won’t give much advantages for overall speed. But for computer with multiple processor cores (which is commonplace nowadays), multithreading can take advantage of additional cores to perform separate instructions at the same time or by splitting the tasks between the cores.&lt;/p&gt;
+
+&lt;p&gt;As for example, below is the sample source code of Windows Console application in C# that will demonstrate multithreading programming vs single threading programming.&lt;/p&gt;
+
+&lt;p&gt;```csharp
+using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;&lt;/p&gt;
+
+&lt;p&gt;namespace MultithreadingVsSingleThreading
+{
+    class Program
+    {
+        #region Fields&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    static int selectedMode;
+    static bool usingSingleThread;
+
+    // The number of threads to be spawned.
+    private const int threadCount = 1000;
+
+    // The total number of spins the actual work is carried out repeatedly.
+    private const int totalCount = 100000;
+
+    #endregion
+
+    #region Methods
+
+    static void Main(string[] args)
+    {
+        Console.Title = &quot;Multithreading vs Single Threading Example&quot;;
+        start:
+        usingSingleThread = false;
+        Console.WriteLine(&quot;Select which mode to run:-&quot;);
+        Console.WriteLine(&quot;  (1) Multithreading&quot;);
+        Console.WriteLine(&quot;  (2) Single Threading&quot;);
+        Console.WriteLine(&quot;  (3) Threadpool&quot;);
+        Console.WriteLine(&quot;  (4) Task&quot;);
+        Console.WriteLine(&quot;  (5) BackgroundWorker&quot;);
+        var input = Console.ReadLine();
+        if (input.Length == 0)
+        {
+            Console.Clear();
+            goto start;
+        }
+        else if (Convert.ToInt32(input) == 0 || Convert.ToInt32(input) &amp;gt;= 6)
+        {
+            Console.Clear();
+            goto start;
+        }
+        else
+        {
+            selectedMode = Convert.ToInt32(input);
+        }
+
+        Thread.CurrentThread.Priority = ThreadPriority.Highest;
+        Stopwatch watch = new Stopwatch();
+        Console.Clear();
+        Console.WriteLine(&quot;Initiating work...&quot;);
+        watch.Start();
+
+        try
+        {
+            HandleMode(selectedMode);
+
+            watch.Stop();
+            Console.WriteLine(&quot;Work done!&quot;);
+            Console.WriteLine(&quot;Time elapsed: {0}&quot;, watch.Elapsed);
+            Console.WriteLine(Environment.NewLine);
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(&quot;Press Enter key to test again or Esc to quit&quot;);
+            Console.ResetColor();
+            var key = Console.ReadKey();
+            if (key.Key == ConsoleKey.Enter)
+            {
+                Console.Clear();
+                goto start;
+            }
+            if (key.Key == ConsoleKey.Escape) Environment.Exit(0);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+        Console.ReadLine();
+    }
+
+    /// &amp;lt;summary&amp;gt;
+    /// Draws a graphical progress bar.
+    /// &amp;lt;/summary&amp;gt;
+    /// &amp;lt;param name=&quot;complete&quot;&amp;gt;&amp;lt;/param&amp;gt;
+    /// &amp;lt;param name=&quot;maxVal&quot;&amp;gt;&amp;lt;/param&amp;gt;
+    /// &amp;lt;param name=&quot;barSize&quot;&amp;gt;&amp;lt;/param&amp;gt;
+    /// &amp;lt;param name=&quot;progressCharacter&quot;&amp;gt;&amp;lt;/param&amp;gt;
+    private static void DrawProgressBar(int complete, int maxVal, int barSize, char progressCharacter)
+    {
+        Console.CursorVisible = false;
+        int left = Console.CursorLeft;
+        decimal perc = (decimal)complete / (decimal)maxVal;
+        int chars = (int)Math.Floor(perc / ((decimal)1 / (decimal)barSize));
+        string p1 = String.Empty, p2 = String.Empty;
+
+        for (int i = 0; i &amp;lt; chars; i++) p1 += progressCharacter;
+        for (int i = 0; i &amp;lt; barSize - chars; i++) p2 += progressCharacter;
+
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.Write(p1);
+        Console.ForegroundColor = ConsoleColor.DarkGreen;
+        Console.Write(p2);
+
+        Console.ResetColor();
+        Console.Write(&quot; {0}%&quot;, (perc * 100).ToString(&quot;N2&quot;));
+        Console.CursorLeft = left;
+    }
+
+    /// &amp;lt;summary&amp;gt;
+    /// Performs the task based on user defined option.
+    /// &amp;lt;/summary&amp;gt;
+    /// &amp;lt;param name=&quot;mode&quot;&amp;gt;&amp;lt;/param&amp;gt;
+    private static void HandleMode(int mode)
+    {
+        switch (mode)
+        {
+            case 1:
+                RunThreadMode();
+                break;
+            case 2:
+                usingSingleThread = true;
+                ComplexWork(totalCount);
+                break;
+            case 3:
+                RunInThreadPool();
+                break;
+            case 4:
+                RunTaskMode();
+                break;
+            case 5:
+                RunInBackgroundWorker();
+                break;
+            default:
+                break;
+        }
+    }
+
+    #region Work Task
+    /// &amp;lt;summary&amp;gt;
+    /// Performs CPU intensive task.
+    /// &amp;lt;/summary&amp;gt;
+    /// &amp;lt;param name=&quot;n&quot;&amp;gt;&amp;lt;/param&amp;gt;
+    private static void ComplexWork(int n)
+    {
+
+        for (int j = 0; j &amp;lt; n; j++)
+        {
+            for (int i = 1; i &amp;lt; 100; i++)
+            {
+                Fac(i);
+            }
+
+            if (usingSingleThread) DrawProgressBar(j, n, Console.WindowWidth, &#39;X&#39;);
+        }
+
+    }
+
+    /// &amp;lt;summary&amp;gt;
+    /// Calculates the factorial of a number.
+    /// &amp;lt;/summary&amp;gt;
+    /// &amp;lt;param name=&quot;n&quot;&amp;gt;&amp;lt;/param&amp;gt;
+    /// &amp;lt;returns&amp;gt;&amp;lt;/returns&amp;gt;
+    private static double Fac(double n)
+    {
+        if (n &amp;gt; 1)
+        {
+            return n * Fac(n - 1);
+        }
+        else
+        {
+            return 1;
+        }
+    }
+
+    #endregion
+
+    /// &amp;lt;summary&amp;gt;
+    /// Spawns new threads based on the thread count and starts the activity.
+    /// &amp;lt;/summary&amp;gt;
+    private static void RunThreadMode()
+    {
+        Thread[] t = new Thread[threadCount];
+
+        for (int i = 0; i &amp;lt; threadCount; i++)
+        {
+            t[i] = new Thread(() =&amp;gt;
+            {
+                ComplexWork(totalCount / threadCount);
+            });
+            t[i].Priority = ThreadPriority.Highest;
+            t[i].Start();
+            DrawProgressBar(i, threadCount, Console.WindowWidth, &#39;X&#39;);
+        }
+
+        // Waits for all the threads to finish.
+        foreach (var ct in t)
+        {
+            ct.Join();
+        }
+    }
+
+    /// &amp;lt;summary&amp;gt;
+    /// Executes the task in a thread pooling context.
+    /// &amp;lt;/summary&amp;gt;
+    private static void RunInThreadPool()
+    {
+        using (CountdownEvent signaler = new CountdownEvent(threadCount))
+        {
+            for (int i = 0; i &amp;lt; threadCount; i++)
+            {
+                ThreadPool.QueueUserWorkItem((x) =&amp;gt;
+                {
+                    ComplexWork(totalCount / threadCount);
+                    signaler.Signal();
+                });
+                DrawProgressBar(i, threadCount, Console.WindowWidth, &#39;X&#39;);
+            }
+            signaler.Wait();
+        }
+
+    }
+
+    /// &amp;lt;summary&amp;gt;
+    /// Creates a new task based on the TPL library.
+    /// &amp;lt;/summary&amp;gt;
+    private static void RunTaskMode()
+    {
+        Task[] taskList = new Task[threadCount];
+        for (int i = 0; i &amp;lt; threadCount; i++)
+        {
+            taskList[i] = new Task(new Action(() =&amp;gt;
+            {
+                ComplexWork(totalCount / threadCount);
+            }));
+            taskList[i].Start();
+            DrawProgressBar(i, threadCount, Console.WindowWidth, &#39;X&#39;);
+        }
+        Task.WaitAll(taskList);
+    }
+
+    /// &amp;lt;summary&amp;gt;
+    /// Starts BackgroundWorker to perform the same action.
+    /// &amp;lt;/summary&amp;gt;
+    private static void RunInBackgroundWorker()
+    {
+        BackgroundWorker[] backgroundWorkerList = new BackgroundWorker[threadCount];
+        using (CountdownEvent signaler = new CountdownEvent(threadCount))
+        {
+            for (int i = 0; i &amp;lt; threadCount; i++)
+            {
+                backgroundWorkerList[i] = new BackgroundWorker();
+                backgroundWorkerList[i].DoWork += delegate (object sender, DoWorkEventArgs e)
+                {
+                    ComplexWork(totalCount / threadCount);
+                    signaler.Signal();
+                };
+                backgroundWorkerList[i].RunWorkerAsync();
+                DrawProgressBar(i, threadCount, Console.WindowWidth, &#39;X&#39;);
+            }
+            signaler.Wait();
+        }
+
+    }
+
+    #endregion
+} } ```
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Screenshot of the application:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://i.imgur.com/YsFg92A.png&quot; alt=&quot;Multithreading vs Single Threading Example&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;Thread&lt;/code&gt; class is used for creating and manipulating a &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/windows/desktop/ms684841%28v=vs.85%29.aspx&quot;&gt;thread&lt;/a&gt; in Windows.&lt;/p&gt;
+
+&lt;p&gt;A &lt;code&gt;Task&lt;/code&gt; represents asynchronous operation and is part of the &lt;a href=&quot;http://msdn.microsoft.com/en-us/library/dd460717%28v=vs.110%29.aspx&quot;&gt;Task Parallel Library&lt;/a&gt;, a set of APIs for running tasks asynchronously and in parallel.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;ThreadPool&lt;/code&gt; class manages a group of threads in which tasks are added to a queue and automatically started when threads are created.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;BackgroundWorker&lt;/code&gt; class executes an operation on a separate thread.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 05 May 2016 00:00:00 +0800</pubDate>
+        <link>http://1my1.github.io/2016/05/05/understanding-multithreading-vs-single-threading-programming.html</link>
+        <guid isPermaLink="true">http://1my1.github.io/2016/05/05/understanding-multithreading-vs-single-threading-programming.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Simple Singleton Pattern Using .NET 4&#39;s Lazy Type</title>
+        <description>&lt;p&gt;Nowadays, most of the Microsoft .NET based applications are using .NET 4 or higher. When talking about Singleton pattern, this way of implementation is my favorite - using the &lt;code&gt;System.Lazy&amp;lt;T&amp;gt;&lt;/code&gt; type.&lt;/p&gt;
+
+&lt;p&gt;All you need to do is pass a delegate to the constructor which calls the Single constructor, which is done most easily with a lambda expression.&lt;/p&gt;
+
+&lt;p&gt;Let say I have a class called &lt;code&gt;SayHello.cs&lt;/code&gt; with the Singleton pattern:&lt;/p&gt;
+
+&lt;p&gt;```csharp
+using System;&lt;/p&gt;
+
+&lt;p&gt;namespace SingletonExample
+{
+    class SayHello
+    {
+        private static readonly Lazy&lt;SayHello&gt; lazy = new Lazy&lt;SayHello&gt;(() =&amp;gt; new SayHello());
+        public static SayHello Instance { get { return lazy.Value; } }&lt;/SayHello&gt;&lt;/SayHello&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;    SayHello()
+    {
+    }
+
+    public void Test()
+    {
+        Console.WriteLine(&quot;Hello hello hello!&quot;);
+    }
+} } ```
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And here my main program that will execute a function from &lt;code&gt;SayHello.cs&lt;/code&gt; class:&lt;/p&gt;
+
+&lt;p&gt;```csharp
+using System;&lt;/p&gt;
+
+&lt;p&gt;namespace SingletonExample
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            SayHello.Instance.Test();&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;        Console.ReadLine();
+    }
+} } ```
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Here’s the output:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://i.imgur.com/Vnbsea3.png&quot; alt=&quot;SingletonExample&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;This singleton pattern is simple and performs well, best used with time-consuming operation class.&lt;/p&gt;
+</description>
+        <pubDate>Thu, 05 May 2016 00:00:00 +0800</pubDate>
+        <link>http://1my1.github.io/2016/05/05/simple-singleton-pattern-using-dotnet-lazy-type.html</link>
+        <guid isPermaLink="true">http://1my1.github.io/2016/05/05/simple-singleton-pattern-using-dotnet-lazy-type.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>My Own Substitution Cipher Program</title>
+        <description>&lt;p&gt;Sometimes, I like to send a secret message or text to some friends. As &lt;strong&gt;just for fun&lt;/strong&gt;, I created my own cipher program in .NET C# called &lt;em&gt;Heiswayi Nrird Cipher Program&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;I know, there are a lot of ciphers that I can use such as steganography, ROT13, Caesar shift cipher, Vigenere and so forth. Yes I can use the modern unbreakable of encryption algorithms such as Triple DES, RSA, Blowfish, Twofish, AES, etc. if I want to, but to be epic, I decided to use a substitution method with my own designed keys and encoding method.&lt;/p&gt;
+
+&lt;p&gt;Here is the screenshot of the program:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://i.imgur.com/AbUYj16.png&quot; alt=&quot;Heiswayi Nrird Cipher Program&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://www.dropbox.com/s/p9lc58cgw059mka/HeiswayiNrirdCipherProgramV1.zip?dl=0&quot;&gt;&lt;strong&gt;Download (.exe)&lt;/strong&gt;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;To use this program, &lt;a href=&quot;https://www.microsoft.com/en-us/download/details.aspx?id=42642&quot;&gt;.NET Framework 4.5.2&lt;/a&gt; is required to be installed first.&lt;/p&gt;
+
+&lt;p&gt;WARNING: This program is just for fun, not for serious business. This program is compiled without any secure obfuscation and highly vulnerable to reverse engineering.&lt;/p&gt;
+</description>
+        <pubDate>Wed, 20 Apr 2016 00:00:00 +0800</pubDate>
+        <link>http://1my1.github.io/2016/04/20/my-own-substitution-cipher-program.html</link>
+        <guid isPermaLink="true">http://1my1.github.io/2016/04/20/my-own-substitution-cipher-program.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Easiest Way to Install Jekyll on Windows using Chocolatey</title>
+        <description>&lt;p&gt;Have you heard about Chocolatey? Chocolatey is the BEST way to install and keep applications updated on Windows. Let’s not waste the time, here are the steps.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;STEP01.&lt;/strong&gt; Open a command prompt with Administrator access&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;STEP02.&lt;/strong&gt; Paste this to install &lt;a href=&quot;https://chocolatey.org/&quot;&gt;Chocolatey&lt;/a&gt;:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;
+@powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;iex ((new-object net.webclient).DownloadString(&#39;https://chocolatey.org/install.ps1&#39;))&quot; &amp;amp;&amp;amp; SET PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;STEP03.&lt;/strong&gt; Close the command prompt as Chocolatey will not be available until we close and reopen.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;STEP04.&lt;/strong&gt; Open a command prompt again with Administrator access&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;STEP05.&lt;/strong&gt; Paste this to install &lt;a href=&quot;https://chocolatey.org/packages/ruby&quot;&gt;Ruby&lt;/a&gt;:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;
+choco install ruby -y
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;STEP06.&lt;/strong&gt; Close and reopen a new command prompt again with Administrator access&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;STEP07.&lt;/strong&gt; Paste this to install &lt;a href=&quot;https://jekyllrb.com/&quot;&gt;Jekyll&lt;/a&gt;:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;
+gem install jekyll
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;STEP08.&lt;/strong&gt; Done! Now we can use standard Jekyll commands to create a new site and serve it:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;
+jekyll new myblog
+cd myblog
+jekyll serve
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Credit: &lt;a href=&quot;https://davidburela.wordpress.com/2015/11/28/easily-install-jekyll-on-windows-with-3-command-prompt-entries-and-chocolatey/&quot;&gt;David Burela&lt;/a&gt;&lt;/p&gt;
+</description>
+        <pubDate>Thu, 14 Apr 2016 00:00:00 +0800</pubDate>
+        <link>http://1my1.github.io/2016/04/14/easiest-way-to-install-jekyll-on-windows-using-chocolatey.html</link>
+        <guid isPermaLink="true">http://1my1.github.io/2016/04/14/easiest-way-to-install-jekyll-on-windows-using-chocolatey.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Simple Exif Reader Program</title>
+        <description>&lt;p&gt;Holla.. It’s been a while I’m not updating anything for this blog. Perhaps, I have been busy with my day job (as a Software Engineer) and my new hobby - photography. Since I have been pretty serious with photography, I have created a simple tool or Windows program that can easily extract the Exif data from an image file. The program called &lt;strong&gt;Exif Reader&lt;/strong&gt;. The latest release version as I’m writing this post is &lt;strong&gt;v1.1&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;screenshot-of-exif-reader-v11&quot;&gt;Screenshot of Exif Reader v1.1&lt;/h3&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://i.imgur.com/yAls0JU.png&quot; alt=&quot;Exif Reader v1.1&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;features-of-exif-reader-v11&quot;&gt;Features of Exif Reader v1.1&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Load image file from local disk or remotely via FETCH URL&lt;/li&gt;
+  &lt;li&gt;Extract metadata of the image file (Exif)&lt;/li&gt;
+  &lt;li&gt;Preview the loaded image file with histogram analysis&lt;/li&gt;
+  &lt;li&gt;Export the Exif data to a text file&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;downloads&quot;&gt;Downloads&lt;/h3&gt;
+
+&lt;p&gt;If you’re interested with this program, you may download the latest binary &lt;a href=&quot;https://github.com/heiswayi/ExifReader/releases&quot;&gt;&lt;strong&gt;release&lt;/strong&gt;&lt;/a&gt; or download the &lt;a href=&quot;https://github.com/heiswayi/ExifReader&quot;&gt;&lt;strong&gt;source code&lt;/strong&gt;&lt;/a&gt; and run it from your computer.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;P/S:&lt;/strong&gt; The intention of this program originally is for my photography info purpose. But, since I created this program with a help of the Open Source software, so let me give back to the community by uploading the source code to my &lt;a href=&quot;http://github.com/heiswayi&quot;&gt;GitHub&lt;/a&gt; and released it under MIT license.&lt;/p&gt;
+</description>
+        <pubDate>Wed, 30 Mar 2016 00:00:00 +0800</pubDate>
+        <link>http://1my1.github.io/2016/03/30/simple-exif-reader-program.html</link>
+        <guid isPermaLink="true">http://1my1.github.io/2016/03/30/simple-exif-reader-program.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Simple Pomodoro Technique Timer Application</title>
+        <description>&lt;p&gt;Talking about Time Management at work, there is one of the more popular time management life hacks used today, it’s called &lt;a href=&quot;https://en.wikipedia.org/wiki/Pomodoro_Technique&quot;&gt;Pomodoro Technique&lt;/a&gt; created in the 1980s by Francesco Cirillo. The Pomodoro Technique is a time management philosophy that aims to provide the user with maximum focus and creative freshness, thereby allowing them to complete projects faster with less mental fatique.&lt;/p&gt;
+
+&lt;p&gt;The technique uses a timer to break down work into intervals traditionally 25 minutes in length, separated by short breaks (e.g. 5 minutes). Each 25-minute work period is called a “pomodoro”, named after the Italian word for tomato. Francesco Cirillo used a kitchen timer shaped like a tomato as his personal timer, and thus the method’s name.&lt;/p&gt;
+
+&lt;p&gt;Well, you can &lt;a href=&quot;https://www.google.com/search?q=pomodoro+technique&quot;&gt;google&lt;/a&gt; around if you want to know or learn more about this Pomodoro Technique.&lt;/p&gt;
+
+&lt;p&gt;Inspired from an &lt;a href=&quot;http://github.com/Mellen/Pomodoro&quot;&gt;open source Pomodoro Technique Timer application&lt;/a&gt; originally developed by &lt;a href=&quot;http://www.matthewellen.co.uk/&quot;&gt;Matthew Ellen&lt;/a&gt; in 2010, so I take the source code, &lt;a href=&quot;https://github.com/heiswayi/Pomodoro&quot;&gt;update it&lt;/a&gt; for my own use by making a little change and adding new features to it.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Let the pictures speak for themselves.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;This is the normal look of the application on startup or before pressing “START WORKING” button:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://i.imgur.com/JPmbbLb.png&quot; alt=&quot;Screenshot1&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;When the user pressed “START WORKING” button, the application will start the Pomodoro timer and minimize into the tray panel:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://i.imgur.com/d2Uqbvs.png&quot; alt=&quot;Screenshot2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;After 25-minute period has passed, the application will beep once and show up with a “Take a break!” message:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://i.imgur.com/1vh1MjD.png&quot; alt=&quot;Screenshot3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;If the user finished his/her break time, he/she can continue the Pomodoro timer again by pressing “START WORKING” button. Just repeat the process.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;TIPS:&lt;/strong&gt; After four “pomodoros” has passed (100 minutes of work time with 15 minutes of break time), you then can take a 15-30 minute break.&lt;/p&gt;
+
+&lt;p&gt;This application is a very simple Pomodoro timer application, but a quite helpful to me since my official job is working with PC all the time. At least, it gives me better focus completing my job tasks.&lt;/p&gt;
+
+&lt;h3 id=&quot;downloads&quot;&gt;Downloads&lt;/h3&gt;
+
+&lt;p&gt;If you want to try, go ahead, download the latest binary package (&lt;code&gt;Pomodoro.exe&lt;/code&gt; file) on the &lt;a href=&quot;https://github.com/heiswayi/Pomodoro/releases&quot;&gt;&lt;strong&gt;release page&lt;/strong&gt;&lt;/a&gt;. No installation required. The application’s source code are also available on &lt;a href=&quot;https://github.com/heiswayi/Pomodoro&quot;&gt;&lt;strong&gt;GitHub repo&lt;/strong&gt;&lt;/a&gt;. Freeware and open source. This application is built in C# WPF with .NET Framework 3.5 SP1.&lt;/p&gt;
+</description>
+        <pubDate>Fri, 04 Dec 2015 00:00:00 +0800</pubDate>
+        <link>http://1my1.github.io/2015/12/04/simple-pomodoro-technique-timer-application.html</link>
+        <guid isPermaLink="true">http://1my1.github.io/2015/12/04/simple-pomodoro-technique-timer-application.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Termie2</title>
+        <description>&lt;p&gt;I have been using &lt;a href=&quot;http://termie.sourceforge.net/&quot;&gt;Termie&lt;/a&gt; for some time ago, and I liked it. It’s a simple RS232 terminal program, originally developed by David McClurg in 2008. Termie is a clone of &lt;a href=&quot;http://www.compuphase.com/software_termite.htm&quot;&gt;Termite from ITB CompuPhase&lt;/a&gt;. It is a useful program to monitor a serial port connection or log an output data from a RS232 communication device.&lt;/p&gt;
+
+&lt;p&gt;So today, I just give a little &lt;em&gt;touch up&lt;/em&gt; to Termie’s original source code, make it a bit better for me by updating it to so-called &lt;strong&gt;Termie2&lt;/strong&gt;. This is due to the project development has stopped and no update since May 2008. &lt;em&gt;I might keep updating Termie2 from time to time either adding new features or fixing bugs.&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Termie2’s Screenshot (v1.0)&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://i.imgur.com/WKP3PBr.png&quot; alt=&quot;Screenshot1&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://i.imgur.com/3M6qfHr.png&quot; alt=&quot;Screenshot2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Termie2’s latest &lt;strong&gt;source code&lt;/strong&gt; are available on my &lt;a href=&quot;https://github.com/heiswayi/Termie2&quot;&gt;GitHub&lt;/a&gt; or go directly to &lt;a href=&quot;https://github.com/heiswayi/Termie2/releases&quot;&gt;&lt;strong&gt;release page&lt;/strong&gt;&lt;/a&gt; to download the binary package.&lt;/p&gt;
+
+&lt;p&gt;This Termie2 program, not much the differences, just a bit change in design and some code optimizations. It will kept up to date when there is a new feature added or bug fixes. Termie2 is built in C# WinForms with .NET Framework 3.5 SP1.&lt;/p&gt;
+</description>
+        <pubDate>Tue, 01 Dec 2015 00:00:00 +0800</pubDate>
+        <link>http://1my1.github.io/2015/12/01/termie2.html</link>
+        <guid isPermaLink="true">http://1my1.github.io/2015/12/01/termie2.html</guid>
+        
+        
+      </item>
+    
+  </channel>
+</rss>
