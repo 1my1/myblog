@@ -23,7 +23,7 @@ google_analytics: UA-58296043-7
 # Build settings
 # ==============
 source: ./
-destination: ../1my1.github.io/
+destination: ./1my1.github.io/
 
 markdown: kramdown
 highlighter: rouge
